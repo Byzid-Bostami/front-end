@@ -1,101 +1,287 @@
-import Image from "next/image";
+import Head from "next/head";
+import Link from "next/link";
+import PostsFetch from "@/components/PostsFetch";
+import DOMPurify from "isomorphic-dompurify";
+import Image from 'next/image';
 
-export default function Home() {
+
+export default async function Home() {
+  const postsdata = await PostsFetch();
+
+  const recentPosts = [...postsdata].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const publicPosts = recentPosts.filter((post) => post.status === "public");
+  const firstPublicPost = publicPosts[0];
+  const recentPublicPosts = publicPosts.slice(1, 7);
+
+
+  const featurePosts = publicPosts.filter((post)=> post.featurePost === true );
+  const LemitedFeaturePost = featurePosts.slice(0, 4);
+
+
+  const news = publicPosts.filter((post)=> post.category === 'news' );
+  const LemitedNews = news.slice(0, 4);
+
+
+  const tech = publicPosts.filter((post)=> post.category === 'tech' );
+  const LemitedTech = tech.slice(0, 4);
+
+
+  const health = publicPosts.filter((post)=> post.category === 'health' );
+  const LemitedHealth = health.slice(0, 4);
+
+
+
+  const createMarkup = (htmlContent: string): { __html: string } => {
+    return {
+      __html: DOMPurify.sanitize(htmlContent),
+    };
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="space-y-10 pb-10">
+      <Head>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Recent posts section */}
+      <div className="grid gap-5 lg:grid-cols-3 grid-cols-1 items-stretch">
+        {/* Main Post Column */}
+        <div className="lg:col-span-2 col-span-1 h-full">
+          {firstPublicPost ? (
+            <Link href={`/post/${firstPublicPost._id}`}>
+              <div className="cursor-pointer flex flex-col justify-center space-y-1 shadow hover:shadow-md hover:scale-95 hover:shadow-black transition-all duration-150 shadow-black/30 rounded-lg h-full">
+              <Image
+                  src={firstPublicPost.photo}
+                  alt={firstPublicPost.title}
+                  unoptimized
+                  width={800}  
+                  height={600}
+                  className="rounded-t-lg h-full w-full"
+                />
+                <div className="p-3">
+                  <p className="font-medium text-[#00C298] capitalize">
+                    {firstPublicPost.category}
+                  </p>
+                  <h2 className="text-2xl capitalize font-bold">
+                    {firstPublicPost.title}
+                  </h2>
+                  <p
+                    className="pt-2 text-stone-700 text-base first-letter:text-xl first-letter:font-medium"
+                    dangerouslySetInnerHTML={createMarkup(
+                      firstPublicPost.description.length > 230
+                        ? firstPublicPost.description.slice(0, 230) + "..."
+                        : firstPublicPost.description
+                    )}
+                  ></p>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <p>No public posts available.</p>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Recent Posts List Column */}
+        <div className="flex flex-col space-y-4 h-full">
+          <h1 className="text-xl font-bold uppercase">Recent posts</h1>
+          <hr />
+          {recentPublicPosts.length > 0 ? (
+            recentPublicPosts.map((post) => (
+              <Link href={`/post/${post._id}`} key={post._id}>
+                <div className="flex items-center lg:justify-between box-border space-x-4 cursor-pointer shadow shadow-black/10 hover:shadow-md hover:shadow-black/50 hover:scale-95 p-2 rounded-lg transition-all duration-150">
+                <Image
+                  src={post.photo}
+                  alt={post.title}
+                  unoptimized
+                  width={64}  
+                  height={64}
+                  className="object-cover w-16 h-16 rounded-lg"
+                />
+                  <div>
+                    <p className="text-sm font-medium text-[#00C298] capitalize">
+                      {post.category}
+                    </p>
+                    <h2 className="text-lg font-bold capitalize">
+                      {post.title}
+                    </h2>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p>No recent posts available.</p>
+          )}
+        </div>
+      </div>
+
+
+
+          {/* feature posts section */}
+
+      <div className="space-y-6">
+
+       <div>
+       <h1 className="text-xl font-bold uppercase pb-2">feature posts</h1>
+       <hr />
+       </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
+        {LemitedFeaturePost.length > 0 ? (
+            LemitedFeaturePost.map((post) => (
+              <Link href={`/post/${post._id}`} key={post._id}>
+                <div className="flex flex-col space-y-2 shadow shadow-black/10 h-full hover:shadow-md hover:shadow-black/50 hover:scale-95 transition-all duration-150 rounded-md" >
+                <Image
+                    src={post.photo}
+                    alt={post.title}
+                    unoptimized
+                    width={800}  
+                    height={160}
+                    className="object-cover w-full md:h-[160px]  rounded-lg"
+                  />
+                  <div className="p-2">
+                    <p className="text-sm font-medium text-[#00C298] capitalize">
+                      {post.category}
+                    </p>
+                    <h2 className="text-lg font-bold capitalize">
+                      {post.title}
+                    </h2>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p>No feature posts available.</p>
+          )}
+
+        </div>
+      </div>    
+
+
+      {/* news posts section */}
+
+      <div className="space-y-6">
+
+       <div>
+       <h1 className="text-xl font-bold uppercase pb-2">latest news</h1>
+       <hr />
+       </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
+        {LemitedNews.length > 0 ? (
+            LemitedNews.map((post) => (
+              <Link href={`/post/${post._id}`} key={post._id}>
+                <div className="flex flex-col space-y-2 shadow shadow-black/10 h-full hover:shadow-md hover:shadow-black/50 hover:scale-95 transition-all duration-150 rounded-md" >
+                <Image
+                    src={post.photo}
+                    alt={post.title}
+                    unoptimized
+                    width={800}  
+                    height={160}
+                    className="object-cover w-full md:h-[160px]  rounded-lg"
+                  />
+                  <div className="p-2">
+                    <p className="text-sm font-medium text-[#00C298] capitalize">
+                      {post.category}
+                    </p>
+                    <h2 className="text-lg font-bold capitalize">
+                      {post.title}
+                    </h2>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p>No news posts available.</p>
+          )}
+
+        </div>
+      </div>
+
+
+      {/* tech posts section */}
+
+      <div className="space-y-6">
+
+       <div>
+       <h1 className="text-xl font-bold uppercase pb-2">tech posts</h1>
+       <hr />
+       </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
+        {LemitedTech.length > 0 ? (
+            LemitedTech.map((post) => (
+              <Link href={`/post/${post._id}`} key={post._id}>
+                <div className="flex flex-col space-y-2 shadow shadow-black/10 h-full hover:shadow-md hover:shadow-black/50 hover:scale-95 transition-all duration-150 rounded-md" >
+                <Image
+                    src={post.photo}
+                    alt={post.title}
+                    unoptimized
+                    width={800}  
+                    height={160}
+                    className="object-cover w-full md:h-[160px]  rounded-lg"
+                  />
+                  <div className="p-2">
+                    <p className="text-sm font-medium text-[#00C298] capitalize">
+                      {post.category}
+                    </p>
+                    <h2 className="text-lg font-bold capitalize">
+                      {post.title}
+                    </h2>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p>No tech posts available.</p>
+          )}
+
+        </div>
+      </div>
+
+
+      {/* health posts section */}
+
+      <div className="space-y-6">
+
+       <div>
+       <h1 className="text-xl font-bold uppercase pb-2">health posts</h1>
+       <hr />
+       </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
+        {LemitedHealth.length > 0 ? (
+            LemitedHealth.map((post) => (
+              <Link href={`/post/${post._id}`} key={post._id}>
+                <div className="flex flex-col space-y-2 shadow shadow-black/10 h-full hover:shadow-md hover:shadow-black/50 hover:scale-95 transition-all duration-150 rounded-md" >
+                <Image
+                    src={post.photo}
+                    alt={post.title}
+                    unoptimized
+                    width={800}  
+                    height={160}
+                    className="object-cover w-full md:h-[160px]  rounded-lg"
+                  />
+                  <div className="p-2">
+                    <p className="text-sm font-medium text-[#00C298] capitalize">
+                      {post.category}
+                    </p>
+                    <h2 className="text-lg font-bold capitalize">
+                      {post.title}
+                    </h2>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p>No health posts available.</p>
+          )}
+
+        </div>
+      </div>
+
     </div>
   );
 }
